@@ -13,12 +13,21 @@ import (
 
 var NewBook models.Book
 
+func JsonResponse(w http.ResponseWriter, data interface{}, statusCode int) {
+	res, err := json.Marshal(data)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	w.Write(res)
+}
+
 func GetBook(w http.ResponseWriter, r *http.Request) {
 	newBooks := models.GetAllBooks()
-	res, _ := json.Marshal(newBooks)
-	w.Header().Set("Content-Type", "pkglication/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(res)
+	JsonResponse(w, newBooks, http.StatusOK)
 }
 
 func GetBookById(w http.ResponseWriter, r *http.Request) {
@@ -27,21 +36,18 @@ func GetBookById(w http.ResponseWriter, r *http.Request) {
 	ID, err := strconv.ParseInt(bookId, 0, 0)
 	if err == nil {
 		fmt.Println("error while parsing")
+		JsonResponse(w, "Invalid book ID", http.StatusBadRequest)
+		return
 	}
 	bookDetails, _ := models.GetBookById(ID)
-	res, _ := json.Marshal(bookDetails)
-	w.Header().Set("Content-Type", "pkglication/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(res)
+	JsonResponse(w, bookDetails, http.StatusOK)
 }
 
 func CreateBook(w http.ResponseWriter, r *http.Request) {
 	CreateBook := &models.Book{}
 	utils.ParseBody(r, CreateBook)
 	b := CreateBook.CreateBook()
-	res, _ := json.Marshal(b)
-	w.WriteHeader(http.StatusOK)
-	w.Write(res)
+	JsonResponse(w, b, http.StatusOK)
 }
 
 func DeleteBook(w http.ResponseWriter, r *http.Request) {
@@ -50,14 +56,11 @@ func DeleteBook(w http.ResponseWriter, r *http.Request) {
 	ID, err := strconv.ParseInt(bookId, 0, 0)
 	if err == nil {
 		fmt.Println("err while parsing")
+		JsonResponse(w, "Invalid book ID", http.StatusBadRequest)
 
 	}
 	book := models.DeleteBook(ID)
-	res, _ := json.Marshal(book)
-	w.Header().Set("Content-Type", "pkglication/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(res)
-
+	JsonResponse(w, book, http.StatusOK)
 }
 
 func UpdateBook(w http.ResponseWriter, r *http.Request) {
@@ -80,8 +83,5 @@ func UpdateBook(w http.ResponseWriter, r *http.Request) {
 		bookDetails.Publication = updateBook.Publication
 	}
 	db.Save(&bookDetails)
-	res, _ := json.Marshal(bookDetails)
-	w.Header().Set("Content-Type", "pkglication/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(res)
+	JsonResponse(w, bookDetails, http.StatusOK)
 }
